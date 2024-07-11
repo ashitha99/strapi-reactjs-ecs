@@ -1,22 +1,15 @@
-FROM node:18-alpine
+FROM node:18-alpine AS build
 
-# Set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy package.json and package-lock.json from the strapi-project directory
-COPY strapi-project/package.json strapi-project/package-lock.json ./
-
-# Install dependencies
+COPY package*.json ./
 RUN npm install
 
-# Copy the rest of the application code into the container
-COPY strapi-project .
-
-# Build the Strapi project
+COPY . .
 RUN npm run build
 
-# Expose the port Strapi will run on
-EXPOSE 1337
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
 
-# Start Strapi
-CMD ["npm", "start"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
